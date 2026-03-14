@@ -11,68 +11,86 @@ import streamlit.components.v1 as components
 # 1. CONFIGURACIÓN E INTERFAZ
 st.set_page_config(page_title="TONUCOS Gestor", layout="wide")
 
-# --- CSS PARA DISEÑO INDUSTRIAL Y VISIBILIDAD MÓVIL ---
+# --- CSS DE DISEÑO PROFESIONAL (DISEÑADOR MODO ON) ---
 st.markdown("""
     <style>
-    .stApp { background-color: #cfd8dc; } /* Gris más oscuro */
+    /* 1. Fondo y eliminación de espacios superiores */
+    .stApp { background-color: #cfd8dc; }
+    .block-container { 
+        padding-top: 0rem !important; 
+        padding-bottom: 0rem !important;
+        max-width: 95% !important;
+    }
+    header { visibility: hidden; } /* Oculta barra superior de Streamlit */
     
-    /* Forzar etiquetas negras y visibles en móvil */
+    /* 2. Logo Centrado y Grande */
+    .logo-container {
+        display: flex;
+        justify-content: center;
+        padding: 0px;
+        margin-top: -20px;
+    }
+
+    /* 3. Etiquetas y Textos Fuertes */
     label, .stMarkdown p, .stSelectbox label, .stTextInput label, .stNumberInput label {
         color: #000000 !important;
         font-weight: 800 !important;
-        font-size: 15px !important;
+        font-size: 14px !important;
+        margin-bottom: 2px !important;
     }
     
-    /* Inputs con borde negro y fondo blanco */
+    /* 4. Totales Achicados y Gris Oscuro */
+    .total-card { 
+        background-color: #263238; /* Gris oscuro industrial */
+        color: #ffffff; 
+        padding: 8px; 
+        border-radius: 6px; 
+        text-align: center;
+        border: 1px solid #000;
+        box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+    }
+    .total-card b { font-size: 18px; color: #fff; }
+    .total-card small { font-size: 10px; text-transform: uppercase; color: #cfd8dc; }
+
+    /* 5. Inputs Modernos */
     .stTextInput input, .stSelectbox div[data-baseweb="select"], .stNumberInput input {
-        border: 2px solid #000 !important;
+        border: 2px solid #263238 !important;
         background-color: #ffffff !important;
-        color: #000 !important;
+        height: 38px !important;
     }
 
-    /* Ocultar flechas del selector numérico */
-    input[type=number]::-webkit-inner-spin-button, 
-    input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
-    
     /* Cabeceras de Mesa */
     .mesa-header { 
-        background-color: #000; color: #fff; padding: 8px 15px; 
-        font-weight: bold; margin-top: 20px; border-radius: 5px; 
+        background-color: #000; color: #fff; padding: 6px 12px; 
+        font-weight: bold; margin-top: 10px; border-radius: 4px; 
         display: flex; justify-content: space-between; align-items: center; 
     }
-    .pers-label { background-color: #fff; color: #000; padding: 2px 10px; border-radius: 12px; font-size: 12px; }
+    .pers-label { background-color: #fff; color: #000; padding: 1px 8px; border-radius: 10px; font-size: 11px; }
 
-    /* Totales */
-    .total-card { background-color: #fff; border: 2px solid #000; padding: 10px; border-radius: 8px; text-align: center; }
-    .total-black { background-color: #000; color: #fff; }
+    .event-title { text-align: center; font-size: 22px; font-weight: 900; color: #263238; text-transform: uppercase; margin-bottom: 10px; }
     
-    .event-title { text-align: center; font-size: 26px; font-weight: 900; color: #000; text-transform: uppercase; margin: 10px 0; }
-    #MainMenu, footer, header {visibility: hidden;}
+    #MainMenu, footer {visibility: hidden;}
     </style>
 """, unsafe_allow_html=True)
 
-# --- FUNCIONES DE SEGURIDAD ---
+# --- FUNCIONES NÚCLEO ---
 def check_password():
     if "password_correct" not in st.session_state:
         st.session_state.password_correct = False
+    if st.session_state.password_correct: return True
     
-    if st.session_state.password_correct:
-        return True
-
-    # Pantalla de login
-    c1, c2, c3 = st.columns([1,2,1])
+    st.markdown("<br><br>", unsafe_allow_html=True)
+    c1, c2, c3 = st.columns([1,1.5,1])
     with c2:
-        st.markdown("<h2 style='text-align:center; color:black;'>INGRESAR</h2>", unsafe_allow_html=True)
-        pw = st.text_input("Contraseña", type="password")
-        if st.button("Entrar", use_container_width=True):
+        st.markdown("<h3 style='text-align:center;'>SISTEMA TONUCOS</h3>", unsafe_allow_html=True)
+        pw = st.text_input("Contraseña de Acceso", type="password")
+        if st.button("INGRESAR", use_container_width=True):
             if pw == st.secrets["access"]["password"]:
                 st.session_state.password_correct = True
                 st.rerun()
-            else:
-                st.error("Contraseña incorrecta")
+            else: st.error("Clave Incorrecta")
     return False
 
-# --- FUNCIONES DE DATOS ---
 def conectar_google_sheet(nombre_archivo):
     try:
         scope = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive']
@@ -100,7 +118,7 @@ def guardar_datos(df_to_save, archivo):
         sheet.clear()
         set_with_dataframe(sheet, df_to_save)
 
-# --- LÓGICA PRINCIPAL ---
+# --- INICIO APP ---
 if check_password():
     query_params = st.query_params
     nombre_evento = query_params.get("id", "Boda Juan y Marta").replace("_", " ")
@@ -111,36 +129,37 @@ if check_password():
     
     if "focus_key" not in st.session_state: st.session_state.focus_key = 0
 
-    # CABECERA E IMAGEN
-    c_img_l, c_img_c, c_img_r = st.columns([1,1,1])
-    with c_img_c:
-        if os.path.exists("logonegro.jpg"): st.image("logonegro.jpg", width=150)
+    # LOGO CENTRADO Y GRANDE
+    st.markdown("<div class='logo-container'>", unsafe_allow_html=True)
+    if os.path.exists("logonegro.jpg"):
+        st.image("logonegro.jpg", width=280) # Logo más grande
+    st.markdown("</div>", unsafe_allow_html=True)
     
     st.markdown(f"<div class='event-title'>{nombre_evento}</div>", unsafe_allow_html=True)
 
-    # PANEL DE TOTALES
+    # PANEL TOTALES COMPACTO (Gris oscuro)
     df_f = st.session_state.df
     if not df_f.empty:
-        t_cols = st.columns(5)
-        stats = [("TOTAL", len(df_f), "black"), 
-                 ("MAYOR", len(df_f[df_f['Categoria']=='MAYOR']), "white"),
-                 ("ADOL.", len(df_f[df_f['Categoria']=='ADOLESCENTE']), "white"),
-                 ("MENOR", len(df_f[df_f['Categoria']=='MENOR']), "white"),
-                 ("BEBÉ", len(df_f[df_f['Categoria']=='BEBÉ']), "white")]
-        for i, (l, v, c) in enumerate(stats):
-            clase = "total-card total-black" if c == "black" else "total-card"
-            t_cols[i].markdown(f"<div class='{clase}'><small>{l}</small><br><b style='font-size:20px'>{v}</b></div>", unsafe_allow_html=True)
+        t_cols = st.columns(6)
+        stats = [("Total", len(df_f)), 
+                 ("Mesas", df_f[df_f['Mesa'].astype(str).str.strip() != "0"]['Mesa'].nunique()),
+                 ("Mayor", len(df_f[df_f['Categoria']=='MAYOR'])),
+                 ("Adol.", len(df_f[df_f['Categoria']=='ADOLESCENTE'])),
+                 ("Menor", len(df_f[df_f['Categoria']=='MENOR'])),
+                 ("Bebé", len(df_f[df_f['Categoria']=='BEBÉ']))]
+        for i, (l, v) in enumerate(stats):
+            t_cols[i].markdown(f"<div class='total-card'><small>{l}</small><br><b>{v}</b></div>", unsafe_allow_html=True)
 
-    # FORMULARIO
-    with st.expander("➕ AÑADIR NUEVO INVITADO", expanded=True):
+    # FORMULARIO DE ALTA
+    with st.expander("➕ AÑADIR REGISTRO", expanded=True):
         with st.form("alta", clear_on_submit=True):
-            col1, col2 = st.columns([1, 3])
-            f_m = col1.number_input("MESA", min_value=0, step=1, key=f"focus_{st.session_state.focus_key}")
-            f_n = col2.text_input("APELLIDO y nombre")
-            col3, col4 = st.columns(2)
-            f_c = col3.selectbox("CATEGORÍA", ["MAYOR", "ADOLESCENTE", "MENOR", "BEBÉ"])
-            f_o = col4.text_input("OBSERVACIONES")
-            if st.form_submit_button("📥 AÑADIR A LA LISTA", use_container_width=True):
+            c1, c2 = st.columns([1, 3])
+            f_m = c1.number_input("MESA", min_value=0, step=1, key=f"f_{st.session_state.focus_key}")
+            f_n = c2.text_input("APELLIDO y nombre")
+            c3, c4 = st.columns(2)
+            f_c = c3.selectbox("CATEGORÍA", ["MAYOR", "ADOLESCENTE", "MENOR", "BEBÉ"])
+            f_o = c4.text_input("OBSERVACIONES")
+            if st.form_submit_button("📥 GUARDAR INVITADO", use_container_width=True):
                 if f_n:
                     nuevo = pd.DataFrame([{"ID": secrets.token_hex(3).upper(), "Mesa": str(int(f_m)), "Nombre": f_n.upper(), "Categoria": f_c, "Observaciones": f_o.upper(), "Asistio": "NO"}])
                     st.session_state.df = pd.concat([st.session_state.df, nuevo], ignore_index=True)
@@ -148,20 +167,20 @@ if check_password():
                     st.session_state.focus_key += 1
                     st.rerun()
 
-    # AUTOFOCO JS
-    components.html(f"<script>setTimeout(function(){{ window.parent.document.querySelectorAll('input')[0].focus(); }}, 500);</script>", height=0)
+    # AUTOFOCO JS AL CAMPO MESA
+    components.html(f"<script>setTimeout(function(){{ window.parent.document.querySelectorAll('input')[0].focus(); }}, 300);</script>", height=0)
 
-    # BUSCADOR Y GUARDAR
+    # BUSCADOR
     st.markdown("---")
     bc1, bc2 = st.columns([3, 1])
-    with bc1: s_q = st.text_input("🔍 BUSCAR INVITADO").upper()
+    with bc1: s_q = st.text_input("🔍 BUSCAR INVITADO", placeholder="Escribe un nombre...").upper()
     with bc2: 
-        st.write("<div style='margin-top:32px'></div>", unsafe_allow_html=True)
+        st.write("<div style='margin-top:28px'></div>", unsafe_allow_html=True)
         if st.button("💾 GUARDAR CAMBIOS", use_container_width=True):
             guardar_datos(st.session_state.df, nombre_evento)
             st.toast("¡Sincronizado!")
 
-    # LISTADO POR MESAS
+    # LISTADO
     df_v = st.session_state.df.copy()
     if s_q: df_v = df_v[df_v['Nombre'].str.contains(s_q, na=False)]
 
@@ -171,16 +190,17 @@ if check_password():
         
         for mesa in sorted(df_v['M_Int'].unique()):
             sub = df_v[df_v['M_Int'] == mesa]
-            st.markdown(f"<div class='mesa-header'><span>🪑 MESA {mesa}</span><span class='pers-label'>{len(sub)} PERS.</span></div>", unsafe_allow_html=True)
+            st.markdown(f"<div class='fdsamesa-header'><span>🪑 MESA {mesa}</span><span class='pers-label'>{len(sub)} PERS.</span></div>", unsafe_allow_html=True)
             for idx, row in sub.iterrows():
                 l1, l2, l3, l4, l5 = st.columns([0.6, 2.5, 1.5, 1.5, 0.4])
+                
                 new_mesa = l1.text_input(f"m_{idx}", row['Mesa'], label_visibility="collapsed")
                 new_nome = l2.text_input(f"n_{idx}", row['Nombre'], label_visibility="collapsed")
                 
-                # Color de categoría
                 bg = cat_colors.get(row['Categoria'], "#fff")
                 st.markdown(f'<style>div[data-baseweb="select"]:has(input[aria-label*="c_{idx}"]) {{ background-color: {bg} !important; }}</style>', unsafe_allow_html=True)
                 new_cat = l3.selectbox(f"c_{idx}", ["MAYOR", "ADOLESCENTE", "MENOR", "BEBÉ"], index=["MAYOR", "ADOLESCENTE", "MENOR", "BEBÉ"].index(row['Categoria']), label_visibility="collapsed")
+                
                 new_obs = l4.text_input(f"o_{idx}", row['Observaciones'], label_visibility="collapsed")
                 
                 if l5.button("🗑️", key=f"d_{idx}"):
@@ -188,7 +208,7 @@ if check_password():
                     guardar_datos(st.session_state.df, nombre_evento)
                     st.rerun()
                 
-                # Actualizar estado (sin guardar en sheet hasta pulsar GUARDAR CAMBIOS)
+                # Update session state values
                 st.session_state.df.at[idx, 'Mesa'] = new_mesa
                 st.session_state.df.at[idx, 'Nombre'] = new_nome.upper()
                 st.session_state.df.at[idx, 'Categoria'] = new_cat
