@@ -7,6 +7,20 @@ import secrets
 import os
 import streamlit.components.v1 as components
 
+import streamlit as st
+
+# Ocultar el menú superior (Main Menu), el pie de página (footer) y el header
+hide_streamlit_style = """
+            <style>
+            #MainMenu {visibility: hidden;}
+            footer {visibility: hidden;}
+            header {visibility: hidden;}
+            </style>
+            """
+st.markdown(hide_streamlit_style, unsafe_allow_html=True)
+
+st.title("Mi App Profesional")
+
 # 1. CONFIGURACIÓN
 st.set_page_config(page_title="TONUCOS Gestor", layout="wide")
 
